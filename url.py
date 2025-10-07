@@ -16,7 +16,7 @@ USERNAME = os.getenv("SCRAPE_USERNAME", "7f789021-1945-4950-9ff1-2c1a15a5937c")
 PASSWORD = os.getenv("SCRAPE_PASSWORD", "7f789021-1945-4950-9ff1-2c1a15a5937c")
 
 # Default URL (can be overridden by CLI arg)
-TEST_URL = os.getenv("TEST_URL", "https://books.toscrape.com/")
+TEST_URL = os.getenv("TEST_URL", "")
 
 # Default headless controlled by env or CLI
 DEFAULT_HEADLESS = os.getenv("HEADLESS", "true").lower() in ("1", "true", "yes")
@@ -320,6 +320,7 @@ if __name__ == "__main__":
         headless_flag = False
 
     scrape_readiness_report(chosen_url, headless=headless_flag, proxy=PROXY, username=USERNAME, password=PASSWORD)
+
 
 
 
