@@ -1,7 +1,7 @@
 from playwright.sync_api import sync_playwright
 import urllib.robotparser
 from urllib.parse import urlparse
-# removed: from playwright_stealth import stealth_sync
+
 
 # ================================
 # 🔧 CONFIGURATION
@@ -70,7 +70,7 @@ def apply_stealth(page):
     Apply lightweight stealth via add_init_script to reduce common automation fingerprints.
     This is not a full bypass for advanced fingerprinting/CAPTCHAs, but helps in many cases.
     """
-    # remove navigator.webdriver
+
     page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined});")
 
     # mock plugins & mimeTypes
@@ -227,5 +227,6 @@ def scrape_readiness_report(url):
 # ▶️ RUN THE SCRAPABILITY TEST
 # ================================
 scrape_readiness_report(TEST_URL)
+
 
 
