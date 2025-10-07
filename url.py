@@ -10,7 +10,7 @@ USERNAME = "7f789021-1945-4950-9ff1-2c1a15a5937c"
 PASSWORD = "7f789021-1945-4950-9ff1-2c1a15a5937c"
 
 # URL of the target site
-TEST_URL = "https://www.amazon.in/"
+TEST_URL = ""
 
 # ================================
 # 🧩 CHECK ROBOTS.TXT
@@ -156,3 +156,4 @@ def scrape_readiness_report(url):
 # ▶️ RUN THE SCRAPABILITY TEST
 # ================================
 scrape_readiness_report(TEST_URL)
+
