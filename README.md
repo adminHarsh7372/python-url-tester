@@ -107,7 +107,7 @@ Scrapability Score (0–100)
 Actionable recommendations
 
 Example Output
-🔍 Analyzing: www.tripadvisor.in
+🔍 Analyzing: www.example.com
 ============================================================
 ✅ robots.txt allows scraping
 ✅ Page loaded successfully. Title: Tripadvisor
