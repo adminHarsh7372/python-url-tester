@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright
 import urllib.robotparser
 from urllib.parse import urlparse
+# removed: from playwright_stealth import stealth_sync
 
 # ================================
 # 🔧 CONFIGURATION
@@ -10,7 +11,7 @@ USERNAME = "7f789021-1945-4950-9ff1-2c1a15a5937c"
 PASSWORD = "7f789021-1945-4950-9ff1-2c1a15a5937c"
 
 # URL of the target site
-TEST_URL = ""
+TEST_URL = ''
 
 # ================================
 # 🧩 CHECK ROBOTS.TXT
@@ -62,6 +63,58 @@ def detect_bot_protection(content):
     return False
 
 # ================================
+# 🛡️ LIGHTWEIGHT STEALTH (no external deps)
+# ================================
+def apply_stealth(page):
+    """
+    Apply lightweight stealth via add_init_script to reduce common automation fingerprints.
+    This is not a full bypass for advanced fingerprinting/CAPTCHAs, but helps in many cases.
+    """
+    # remove navigator.webdriver
+    page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined});")
+
+    # mock plugins & mimeTypes
+    page.add_init_script("""
+        Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
+        Object.defineProperty(navigator, 'mimeTypes', { get: () => [1,2,3] });
+    """)
+
+    # languages
+    page.add_init_script("Object.defineProperty(navigator, 'languages', {get: () => ['en-US','en']});")
+
+    # permissions query spoof (notifications)
+    page.add_init_script("""
+        const __origQuery = navigator.permissions && navigator.permissions.query;
+        if (__origQuery) {
+            navigator.permissions.__proto__.query = function(parameters) {
+                if (parameters && parameters.name === 'notifications') {
+                    return Promise.resolve({ state: Notification.permission });
+                }
+                return __origQuery(parameters);
+            };
+        }
+    """)
+
+    # webgl vendor/renderer spoof
+    page.add_init_script("""
+        try {
+          const getParameter = WebGLRenderingContext.getParameter;
+          WebGLRenderingContext.prototype.getParameter = function(parameter) {
+            // UNMASKED_VENDOR_WEBGL = 37445, UNMASKED_RENDERER_WEBGL = 37446
+            if (parameter === 37445) return 'Intel Inc.';
+            if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+            return getParameter.call(this, parameter);
+          };
+        } catch (e) {}
+    """)
+
+    # platform
+    page.add_init_script("Object.defineProperty(navigator, 'platform', {get: () => 'Win32'});")
+
+    # provide a chrome runtime stub
+    page.add_init_script("window.chrome = window.chrome || { runtime: {} };")
+
+# ================================
 # 🧾 SCRAPABILITY SCORE ANALYZER
 # ================================
 def scrape_readiness_report(url):
@@ -84,15 +137,32 @@ def scrape_readiness_report(url):
 
     # STEP 2: Playwright load
     with sync_playwright() as p:
+        browser = None
         try:
             browser = p.chromium.launch(
                 headless=False,
                 proxy={"server": PROXY, "username": USERNAME, "password": PASSWORD}
             )
-            context = browser.new_context()
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+                viewport={"width": 1920, "height": 1080}
+            )
             page = context.new_page()
-            page.goto(url, timeout=60000)
-            page.wait_for_load_state("networkidle")
+
+            # Apply stealth mode (local implementation)
+            apply_stealth(page)
+
+            page.goto(url, timeout=120000)  # Increased timeout
+
+            # Universal: wait for first visible element on the page
+            try:
+                first_visible = page.query_selector("body *:not(script):not(style)")
+                if first_visible:
+                    first_visible.wait_for_element_state("visible", timeout=60000)
+            except:
+                pass
+
             title = page.title()
             content = page.content()
             print(f"✅ Page loaded. Title: {title}")
@@ -150,10 +220,12 @@ def scrape_readiness_report(url):
         except Exception as e:
             print(f"❌ Could not load page: {e}")
         finally:
-            browser.close()
+            if browser:
+                browser.close()
 
 # ================================
 # ▶️ RUN THE SCRAPABILITY TEST
 # ================================
 scrape_readiness_report(TEST_URL)
+
 
