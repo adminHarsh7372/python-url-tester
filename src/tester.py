@@ -97,7 +97,7 @@ def detect_bot_protection(content, page):
     return False
 
 # ================================
-# 🛡️ STEALTH ENHANCEMENTS
+# 🛡️ STEALTH 
 # ================================
 def apply_stealth(page):
     page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined});")
@@ -160,7 +160,7 @@ def scrape_readiness_report(url, headless=DEFAULT_HEADLESS, proxy=PROXY, usernam
             page = context.new_page()
             apply_stealth(page)
 
-            # 🔹 FIXED LOAD BLOCK (reliable for JS-heavy sites)
+            # 🔹 LOAD BLOCK (reliable for JS-heavy sites)
             max_attempts = 3
             attempts = 0
             last_exception = None
